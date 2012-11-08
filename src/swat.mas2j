@@ -1,0 +1,8 @@
+MAS swat {
+
+    infrastructure: Centralised
+
+    environment: SWATEnv
+    
+    agents: player;
+}
