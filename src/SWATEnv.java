@@ -14,22 +14,20 @@ public class WumpusWorldEnv extends Environment {
 
     public static final int GRID_SIZE = 7;
     
-	public static final int WUMPUS  = 16;
-	public static final int GOLD = 32;
-	public static final int PIT = 64;
-	public static final int STENCH = 128;
-	public static final int GLITTER = 256;
-	public static final int BREEZE = 512;    
+	public static final int BLUE_FLAG  = 16;
+	public static final int REG_FLAG = 32;
+	public static final int OBSTACLE = 64;
+	public static final int PIT = 128;	   
 
-    static Logger logger = Logger.getLogger(WumpusWorldEnv.class.getName());
+    static Logger logger = Logger.getLogger(SWATEnv.class.getName());
 
-    private WumpusModel model;
-    private WumpusView  view;
+    private SWATModel model;
+    private SWATView  view;
     
     @Override
     public void init(String[] args) {
-        model = new WumpusModel();
-        view  = new WumpusView(model);
+        model = new SWATModel(10);
+        view  = new SWATView(model);
         model.setView(view);
         updatePercepts();
     }
@@ -88,7 +86,6 @@ public class WumpusWorldEnv extends Environment {
 			addPercept(percepcao);
 			// TODO: tirar o bicho do mapa
 		}
-		
 	}
 	
 	void criaPercepcoes(int x, int y) {
@@ -143,31 +140,48 @@ public class WumpusWorldEnv extends Environment {
 		 								        
     }
 
-    class WumpusModel extends GridWorldModel {
+    class SWATModel extends GridWorldModel {
         
-        private WumpusModel() {
-            super(GRID_SIZE, GRID_SIZE, 1); // 1 agente            		            
+		private int numberOfAgents;
+		
+        private SWATModel(int numberOfAgents) {
+            super(GRID_SIZE, GRID_SIZE, numberOfAgents);            		            
             
-			iniciarMundo();            
+			this.numberOfAgents = numberOfAgents;
+			
+			initWorld();            
         }
 		
-		void iniciarMundo() {
-			// Aqui vai o codigo pra iniciar o mundo
-			// Seria legal gerar um mundo aleatorio.
+		void initWorld() {
+			// Setup teams
 						
-			int inicio_x_agente = 0;
-			int inicio_y_agente = 0;
-			setAgPos(0, inicio_x_agente, inicio_y_agente);
-						
-			add(WUMPUS, 2, 4);
-			add(PIT, 2, 2);
-			//add(PIT, 2, 4);
-			add(PIT, 2, 6);
-			//add(PIT, 4, 2);
-			add(GOLD, 6, 6);
+			int ag = 0;
+			int agents_per_team = this.numberOfAgents / 2;
+			for(int i = 0; i < GRID_SIZE && ag < agents_per_team; ++i){
+				for(int j = 0; j < GRID_SIZE && ag < agents_per_team; ++j) {
+					if (isCellAvailable(i, j)){
+						setAgPos(ag, i ,j);
+						ag++;
+					}
+				}
+			}
+			
+			for(int i = 0; i < GRID_SIZE && ag < this.numberOfAgents; ++i){
+				for(int j = GRID_SIZE; j >= 0 && ag < this.numberOfAgents; --j) {
+					if (isCellAvailable(i, j)){
+						setAgPos(ag, i ,j);
+						ag++;
+					}
+				}
+			}
 
-		}                
+		}
         
+		
+		boolean isCellAvailable(int x, int y) {
+			return !hasObject(OBSTACLE, x, y) && !hasObject(PIT, x, y); 	
+		}
+		
         void move(int x, int y) throws Exception {
             Location r1 = getAgPos(0);
 			r1.x = x;
@@ -178,9 +192,9 @@ public class WumpusWorldEnv extends Environment {
         
     }
     
-    class WumpusView extends GridWorldView {
+    class SWATView extends GridWorldView {
 
-        public WumpusView(WumpusModel model) {
+        public SWATView(SWATModel model) {
             super(model, "Wumpus World", 600);
             defaultFont = new Font("Arial", Font.BOLD, 16); // change default font
             setVisible(true);
