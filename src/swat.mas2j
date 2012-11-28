@@ -1,8 +1,10 @@
-MAS swat {
+MAS swat	 {
 
     infrastructure: Centralised
 
-    environment: SWATEnv
+    environment: SWATEnv("swat.mas2j")
     
-    agents: player;
+    agents: 
+		player # 16;
+	
 }
