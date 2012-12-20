@@ -3,10 +3,13 @@ adjacent(X,Y,X-1,Y).
 adjacent(X,Y,X,Y+1).
 adjacent(X,Y,X,Y-1).
 
-//adjacent(X,Y,X+1,Y+1).
-//adjacent(X,Y,X+1,Y-1).
-//adjacent(X,Y,X-1,Y+1).
-//adjacent(X,Y,X-1,Y-1).
+adjacent(X,Y,X+1,Y+1).
+adjacent(X,Y,X+1,Y-1).
+adjacent(X,Y,X-1,Y+1).
+adjacent(X,Y,X-1,Y-1).
+
+enemy(blue_team, red_team).
+enemy(red_team, blue_team).
 
 
 inside_world(X,Y) :-
@@ -26,10 +29,11 @@ seguro(X,Y) :- visitado(X,Y).
 
 +!main
    <- 
-      !on_the_goods.
+      !attack.
 
-+!on_the_goods : position(X, Y) & adjacent(X,Y,A,B) & inside_world(A,B)
++!attack : team(T) & not has_flag(T) & enemy(T, E)
    <- 
-   	move(A,B).
+   	move_towards_flag(E);
+	!attack.
 	  
 
