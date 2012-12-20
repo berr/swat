@@ -39,7 +39,6 @@ public class SWATEnv extends Environment {
 		model = new SWATModel(NUMBER_OF_AGENTS);
 		view = new SWATView(model);
 		model.setView(view);
-		updatePercepts();
 
 		try {
 			jason.mas2j.parser.mas2j parser = new jason.mas2j.parser.mas2j(
@@ -75,13 +74,15 @@ public class SWATEnv extends Environment {
 				int x = (int) ((NumberTerm) action.getTerm(0)).solve();
 				int y = (int) ((NumberTerm) action.getTerm(1)).solve();
 				model.move(agentNumber, x, y);
-			} else if (action_name.equals("move_towards_flag")) {
-				String team = action.getTerm(0).toString();
-				if (team.equals("red_team")) {
-					model.moveTowardsRedFlag(agentNumber);
-				} else {
-					model.moveTowardsBlueFlag(agentNumber);
-				}
+			} else if (action_name.equals("move_towards")) {
+				int x = (int) ((NumberTerm) action.getTerm(0)).solve();
+				int y = (int) ((NumberTerm) action.getTerm(1)).solve();
+				model.moveTowardsLocation(agentNumber, x, y);
+			} else if (action_name.equals("win")) {
+				System.out.println("WIN!");
+				stop();
+			} else if (action_name.equals("grab_flag")) {
+				System.out.println("has flag");
 			} else {
 				return false;
 			}
@@ -90,7 +91,7 @@ public class SWATEnv extends Environment {
 		}
 
 		view.repaint();
-		updatePercepts();
+		updatePercepts(agentNumber);
 
 		try {
 			Thread.sleep(100);
@@ -115,8 +116,8 @@ public class SWATEnv extends Environment {
 		return this.agentNames.get(agent);
 	}
 
-	void updatePercepts() {
-		// clearPercepts();
+	private synchronized void updatePercepts(int agentNumber) {
+		model.updatePercepts(agentNumber);
 	}
 
 	class SWATModel extends GridWorldModel {
@@ -133,7 +134,29 @@ public class SWATEnv extends Environment {
 			initWorld();
 		}
 
-		private void moveTowardsLocation(int agentNumber, Location l) {
+		public synchronized void updatePercepts(int agentNumber) {
+			removePerceptsByUnif("player" + agentNumber, Literal.parseLiteral("position(X,Y)"));
+			removePerceptsByUnif(Literal.parseLiteral("flag(T, A, B)"));
+			
+			Literal blueFlagLiteral = Literal.parseLiteral("flag(blue_team," + blueFlag.x
+					+ ", " + blueFlag.y + ").");
+			Literal redFlagLiteral = Literal.parseLiteral("flag(red_team,"
+					+ redFlag.x + ", " + redFlag.y + ").");
+			
+			addPercept(blueFlagLiteral);
+			addPercept(redFlagLiteral);
+
+			String agentName = "player" + agentNumber;
+
+			Location location = model.getAgPos(agentNumber);
+			Literal locationLiteral = Literal.parseLiteral("position("
+					+ location.x + "," + location.y + ").");
+
+			addPercept(agentName, locationLiteral);
+		}
+
+		public void moveTowardsLocation(int agentNumber, int x, int y) {
+			Location l = new Location(x ,y);
 			Location agentLocation = getAgPos(agentNumber);
 			
 			int best_x;
@@ -155,7 +178,6 @@ public class SWATEnv extends Environment {
 			
 			if (isCellAvailableForAgent(best_x, best_y)){
 				move(agentNumber, best_x, best_y);
-				System.out.println(agentNumber + " to the best!");
 				return;
 			}
 			
@@ -163,13 +185,11 @@ public class SWATEnv extends Environment {
 			for (int i = -1; i <= 1; i++){
 				if (isCellAvailableForAgent(best_x, agentLocation.y + i)){
 					move(agentNumber, best_x, agentLocation.y + i);
-					System.out.println(agentNumber + " almost!");
 					return;
 				}
 				
 				if (isCellAvailableForAgent(agentLocation.x + i, best_y)){
 					move(agentNumber, agentLocation.x + i, best_y);
-					System.out.println(agentNumber + " almost!");
 					return;
 				}
 					
@@ -182,23 +202,17 @@ public class SWATEnv extends Environment {
 				int current_y = agentLocation.y + y_offset;
 				if(isCellAvailableForAgent(current_x, current_y)){
 					move(agentNumber, current_x, current_y);
-					System.out.println(agentNumber + " random =(");
 					return;
 				}
 			} 
 		}
 
-		public void moveTowardsRedFlag(int agentNumber) {
-			moveTowardsLocation(agentNumber, redFlag);
-		}
-
-		public void moveTowardsBlueFlag(int agentNumber) {
-			moveTowardsLocation(agentNumber, blueFlag);
-		}
 
 		public synchronized void move(int agent, int x, int y) {
-			if (isCellAvailableForAgent(x, y))
-				setAgPos(agent, new Location(x, y));
+			if (!isCellAvailableForAgent(x, y))
+				return;
+			
+			setAgPos(agent, new Location(x, y));
 		}
 
 		public static final double max_percentage = 0.27;
@@ -290,11 +304,22 @@ public class SWATEnv extends Environment {
 
 			addPercept(borderLiteral);
 
-			Literal blueFlagLiteral = Literal.parseLiteral("red_flag(" + 0
-					+ ", " + GRID_SIZE / 2 + ").");
-			Literal redFlagLiteral = Literal.parseLiteral("red_flag("
-					+ (GRID_SIZE - 1) + ", " + GRID_SIZE / 2 + ").");
 
+			Literal blueBaseLiteral = Literal.parseLiteral("base(blue_team," + 0
+					+ ", " + GRID_SIZE / 2 + ").");
+			Literal redBaseLiteral = Literal.parseLiteral("base(red_team,"
+					+ (GRID_SIZE - 1) + ", " + GRID_SIZE / 2 + ").");
+						
+			addPercept(blueBaseLiteral);
+			addPercept(redBaseLiteral);
+			
+			
+			
+			Literal blueFlagLiteral = Literal.parseLiteral("flag(blue_team," + 0
+					+ ", " + GRID_SIZE / 2 + ").");
+			Literal redFlagLiteral = Literal.parseLiteral("flag(red_team,"
+					+ (GRID_SIZE - 1) + ", " + GRID_SIZE / 2 + ").");
+			
 			addPercept(blueFlagLiteral);
 			addPercept(redFlagLiteral);
 
@@ -320,8 +345,8 @@ public class SWATEnv extends Environment {
 		boolean isCellAvailableForAgent(int x, int y) {
 			return !hasObject(WALL, x, y) && !hasObject(PIT, x, y)
 					&& !hasObject(AGENT, x, y) 
-					&& x > 0 && x < GRID_SIZE
-					&& y > 0 && y < GRID_SIZE;
+					&& x >= 0 && x < GRID_SIZE
+					&& y >= 0 && y < GRID_SIZE;
 		}
 
 		boolean isCellAvailable(int x, int y) {

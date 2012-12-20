@@ -29,11 +29,27 @@ seguro(X,Y) :- visitado(X,Y).
 
 +!main
    <- 
-      !attack.
+      !attack;
+	  !return.
 
-+!attack : team(T) & not has_flag(T) & enemy(T, E)
++!attack : team(T) & enemy(T, E) & flag(E, X, Y)
    <- 
-   	move_towards_flag(E);
+   	move_towards(X, Y);
 	!attack.
 	  
-
+//+!attack : team(T) & enemy(T,E) & position(X,Y) & flag(E, X, Y)
+//   <-
+//   	grab_flag.
+	
++!return : team(T) & base(T, A, B)
+   <-
+     move_towards(A, B);
+	 !return.
+	 
++!return : team(T) & position(X,Y) & base(T, X, Y)
+   <-
+     win.
+	
+	
+	
+	
