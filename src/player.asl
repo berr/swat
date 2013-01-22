@@ -17,10 +17,6 @@ inside_world(X,Y) :-
 		(X >= LeftBottomX & Y >= LeftBottomY & X <= RightTopX & Y <= RightTopY).	
 		
 
-seguro(X,Y) :- ~tem_buraco(X,Y) & ~tem_wumpus(X,Y).
-seguro(X,Y) :- visitado(X,Y).
-~seguro(X,Y) :- tem_buraco(X,Y) | tem_wumpus(X,Y).
-
 /* Objetivo inicial */
 
 !main. 
@@ -32,14 +28,18 @@ seguro(X,Y) :- visitado(X,Y).
       !attack;
 	  !return.
 
+//+!attack : team(T) & enemy(T,E) & position(X,Y) & flag(E, X, Y)
+//   <-
+//   	grab_flag.
+
 +!attack : team(T) & enemy(T, E) & flag(E, X, Y)
    <- 
    	move_towards(X, Y);
 	!attack.
-	  
-//+!attack : team(T) & enemy(T,E) & position(X,Y) & flag(E, X, Y)
-//   <-
-//   	grab_flag.
+
+-!attack : true
+   <-
+    error.
 	
 +!return : team(T) & base(T, A, B)
    <-

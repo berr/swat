@@ -5,6 +5,6 @@ MAS swat	 {
     environment: SWATEnv("swat.mas2j")
     
     agents: 
-		player # 16;
+		player # 4;
 	
 }

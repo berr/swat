@@ -28,7 +28,7 @@ public class SWATEnv extends Environment {
 
 	static Logger logger = Logger.getLogger(SWATEnv.class.getName());
 
-	public static final int NUMBER_OF_AGENTS = 0x10;
+	public static final int NUMBER_OF_AGENTS = /*0x10*/4;
 
 	private SWATModel model;
 	private SWATView view;
@@ -83,6 +83,8 @@ public class SWATEnv extends Environment {
 				stop();
 			} else if (action_name.equals("grab_flag")) {
 				System.out.println("has flag");
+			} else if (action_name.equals("error")) {
+				System.out.println("error");
 			} else {
 				return false;
 			}
@@ -94,7 +96,7 @@ public class SWATEnv extends Environment {
 		updatePercepts(agentNumber);
 
 		try {
-			Thread.sleep(100);
+			Thread.sleep(500);
 		} catch (Exception e) {
 			// pass
 		}
@@ -135,27 +137,22 @@ public class SWATEnv extends Environment {
 		}
 
 		public synchronized void updatePercepts(int agentNumber) {
-			removePerceptsByUnif("player" + agentNumber, Literal.parseLiteral("position(X,Y)"));
+			String agentName = "player" + agentNumber;
+			
+			Location oldAgentPosition = getAgPos(agentNumber);
+			
 			removePerceptsByUnif(Literal.parseLiteral("flag(T, A, B)"));
 			
-			Literal blueFlagLiteral = Literal.parseLiteral("flag(blue_team," + blueFlag.x
-					+ ", " + blueFlag.y + ").");
+			Literal blueFlagLiteral = Literal.parseLiteral("flag(blue_team,"
+					+ blueFlag.x + ", " + blueFlag.y + ").");
 			Literal redFlagLiteral = Literal.parseLiteral("flag(red_team,"
 					+ redFlag.x + ", " + redFlag.y + ").");
 			
 			addPercept(blueFlagLiteral);
 			addPercept(redFlagLiteral);
-
-			String agentName = "player" + agentNumber;
-
-			Location location = model.getAgPos(agentNumber);
-			Literal locationLiteral = Literal.parseLiteral("position("
-					+ location.x + "," + location.y + ").");
-
-			addPercept(agentName, locationLiteral);
 		}
 
-		public void moveTowardsLocation(int agentNumber, int x, int y) {
+		public synchronized void moveTowardsLocation(int agentNumber, int x, int y) {
 			Location l = new Location(x ,y);
 			Location agentLocation = getAgPos(agentNumber);
 			
@@ -198,13 +195,25 @@ public class SWATEnv extends Environment {
 			while(true){
 				int x_offset = Math.abs(random.nextInt() % 3) - 1;
 				int y_offset = Math.abs(random.nextInt() % 3) - 1;
-				int current_x = agentLocation.x + x_offset;
-				int current_y = agentLocation.y + y_offset;
-				if(isCellAvailableForAgent(current_x, current_y)){
-					move(agentNumber, current_x, current_y);
-					return;
+				int future_x = agentLocation.x + x_offset;
+				int future_y = agentLocation.y + y_offset;
+				if(isCellAvailableForAgent(future_x, future_y)){
+					move(agentNumber, future_x, future_y);
+					break;
 				}
-			} 
+			}
+			
+			String agentName = "player" + agentNumber;
+			
+			Location location = model.getAgPos(agentNumber);
+			Literal locationLiteral = Literal.parseLiteral("position("
+					+ location.x + "," + location.y + ").");
+					
+			Literal oldLocationLiteral = Literal.parseLiteral("position("
+					+ agentLocation.x + "," + agentLocation.y + ").");
+
+			addPercept(agentName, locationLiteral);
+			removePercept(agentName, oldLocationLiteral);
 		}
 
 
@@ -373,7 +382,7 @@ public class SWATEnv extends Environment {
 
 		@Override
 		public void draw(Graphics g, int x, int y, int object) {
-			String descricao = getCellDescription(object, x, y);
+			String description = getCellDescription(object, x, y);
 
 			Color old_color = g.getColor();
 
@@ -403,7 +412,7 @@ public class SWATEnv extends Environment {
 				g.setColor(old_color);
 			}
 
-			super.drawString(g, x, y, defaultFont, descricao);
+			super.drawString(g, x, y, defaultFont, description);
 		}
 
 		@Override
