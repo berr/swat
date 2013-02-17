@@ -28,9 +28,9 @@ inside_world(X,Y) :-
       !attack;
 	  !return.
 
-//+!attack : team(T) & enemy(T,E) & position(X,Y) & flag(E, X, Y)
-//   <-
-//   	grab_flag.
++!attack : team(T) & enemy(T,E) & position(X,Y) & flag(E, X, Y)
+   <-
+   	grab_flag.
 
 +!attack : team(T) & enemy(T, E) & flag(E, X, Y)
    <- 
