@@ -11,6 +11,8 @@ adjacent(X,Y,X-1,Y-1).
 enemy(blue_team, red_team).
 enemy(red_team, blue_team).
 
+ally(I,U) :- team(I,T) & team(U,T).
+
 
 inside_world(X,Y) :-
 	borders(LeftBottomX, LeftBottomY, RightTopX, RightTopY) & 
@@ -28,37 +30,34 @@ inside_world(X,Y) :-
       !attack;
 	  !return.
 
-+!attack : team(T) & enemy(T,E) & position(X,Y) & flag(E, X, Y)
+	  
+//+carrying_flag : number(I) & has_flag(X, E) & ally(I,X)
+//   <-
+    
++!attack : number(I) & team(I,T) & enemy(T,E) & position(X,Y) & flag(E, X, Y)
    <-
    	grab_flag(E).
 
-+!attack : team(T) & enemy(T, E) & flag(E, X, Y)
++!attack : number(I) & team(I,T) & enemy(T, E) & flag(E, X, Y)
    <- 
    	move_towards(X, Y);
 	!attack.
-
-+!attack : team(T) & enemy(T, E)
-   <- 
-   	move_towards(1, 1);
-	!attack.	
 	
 -!attack : true
    <-
     error.
-
 	
-+!return : team(T) & position(X,Y) & base(T, X, Y)
++!return : number(I) & team(I,T) & position(X,Y) & base(T, X, Y) & carrying_flag(I,T)
+   <-
+     drop;
+	 !main.
+
++!return : number(I) & team(I,T) & enemy(T,E) & position(X,Y) & base(T, X, Y) & carrying_flag(I,E)
    <-
      win.
-	
 	 
-+!return : team(T) & base(T, A, B) 
++!return : number(I) & team(I,T) & base(T, A, B) 
    <-
      move_towards(A, B);
 	 !return.
-	 
 
-	
-	
-	
-	

@@ -90,6 +90,8 @@ public class SWATEnv extends Environment {
 				grab_flag(agentNumber, s);
 			} else if (action_name.equals("error")) {
 				System.out.println("error");
+			} else if (action_name.equals("drop")) {
+				System.out.println("drop");
 			} else {
 				return false;
 			}
@@ -101,7 +103,7 @@ public class SWATEnv extends Environment {
 		updatePercepts(agentNumber);
 
 		try {
-			Thread.sleep(500);
+			Thread.sleep(250);
 		} catch (Exception e) {
 			// pass
 		}
@@ -121,7 +123,8 @@ public class SWATEnv extends Environment {
 			carrier.capture_flag(BLUE_FLAG);
 		}
 		
-		System.out.println(carrier.name() + " has grabbed the flag");
+		Literal flagCarryingLiteral = Literal.parseLiteral("carrying_flag(" + agentNumber + "," + flagsTeam + ").");
+		addPercept(flagCarryingLiteral);
 	}
 
 	
@@ -387,11 +390,13 @@ public class SWATEnv extends Environment {
 				addPercept(agent.name(), locationLiteral);
 				Literal teamLiteral;
 				if (agent.isRedTeamMember()) {
-					teamLiteral = Literal.parseLiteral("team(red_team).");
+					teamLiteral = Literal.parseLiteral("team(" + agent.number() + "," + "red_team).");
 				} else {
-					teamLiteral = Literal.parseLiteral("team(blue_team).");
+					teamLiteral = Literal.parseLiteral("team(" + agent.number() + "," + "blue_team).");
 				}
-				addPercept(agent.name(), teamLiteral);
+				addPercept(teamLiteral);
+				Literal numberLiteral = Literal.parseLiteral("number(" + agent.number() + ").");
+				addPercept(agent.name(), numberLiteral);
 			}
 
 		}
