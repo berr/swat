@@ -30,13 +30,18 @@ inside_world(X,Y) :-
 
 +!attack : team(T) & enemy(T,E) & position(X,Y) & flag(E, X, Y)
    <-
-   	grab_flag.
+   	grab_flag(E).
 
 +!attack : team(T) & enemy(T, E) & flag(E, X, Y)
    <- 
    	move_towards(X, Y);
 	!attack.
 
++!attack : team(T) & enemy(T, E)
+   <- 
+   	move_towards(1, 1);
+	!attack.	
+	
 -!attack : true
    <-
     error.
@@ -47,7 +52,7 @@ inside_world(X,Y) :-
      win.
 	
 	 
-+!return : team(T) & base(T, A, B)
++!return : team(T) & base(T, A, B) 
    <-
      move_towards(A, B);
 	 !return.
