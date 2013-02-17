@@ -36,9 +36,6 @@ public class SWATEnv extends Environment {
 
 	@Override
 	public void init(String[] args) {
-		model = new SWATModel(NUMBER_OF_AGENTS);
-		view = new SWATView(model);
-		model.setView(view);
 
 		try {
 			jason.mas2j.parser.mas2j parser = new jason.mas2j.parser.mas2j(
@@ -47,19 +44,21 @@ public class SWATEnv extends Environment {
 
 			this.agentNames = new ArrayList<String>();
 
-			for (AgentParameters ap : project.getAgents()) {
-				String agName = ap.name;
-				for (int cAg = 0; cAg < ap.qty; cAg++) {
-					String numberedAg = agName;
-					if (ap.qty > 1) {
-						numberedAg += (cAg + 1);
-					}
-					this.agentNames.add(numberedAg);
+			for (AgentParameters agentClass : project.getAgents()) {
+				String agentName = agentClass.name;
+				for (int agentNumber = 1; agentNumber <= agentClass.qty; agentNumber++) {
+					this.agentNames.add(agentName + agentNumber);
 				}
+				
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		
+		model = new SWATModel(NUMBER_OF_AGENTS);
+		view = new SWATView(model);
+		model.setView(view);
 	}
 
 	@Override
@@ -115,7 +114,7 @@ public class SWATEnv extends Environment {
 	}
 
 	public String agentName(int agent) {
-		return this.agentNames.get(agent);
+		return agentNames.get(agent);
 	}
 
 	private synchronized void updatePercepts(int agentNumber) {
@@ -137,7 +136,7 @@ public class SWATEnv extends Environment {
 		}
 
 		public synchronized void updatePercepts(int agentNumber) {
-			String agentName = "player" + agentNumber;
+			String agentName = agentName(agentNumber);
 			
 			Location oldAgentPosition = getAgPos(agentNumber);
 			
@@ -203,27 +202,29 @@ public class SWATEnv extends Environment {
 				}
 			}
 			
-			String agentName = "player" + agentNumber;
-			
-			Location location = model.getAgPos(agentNumber);
-			Literal locationLiteral = Literal.parseLiteral("position("
-					+ location.x + "," + location.y + ").");
-					
-			Literal oldLocationLiteral = Literal.parseLiteral("position("
-					+ agentLocation.x + "," + agentLocation.y + ").");
-
-			addPercept(agentName, locationLiteral);
-			removePercept(agentName, oldLocationLiteral);
 		}
 
 
-		public synchronized void move(int agent, int x, int y) {
+		public synchronized void move(int agentNumber, int x, int y) {
 			if (!isCellAvailableForAgent(x, y))
 				return;
 			
-			setAgPos(agent, new Location(x, y));
+			String agent = agentName(agentNumber);
+			
+			Location oldLocation = model.getAgPos(agentNumber);
+			Literal oldLocationLiteral = Literal.parseLiteral("position("
+					+ oldLocation.x + "," + oldLocation.y + ").");
+
+			Literal newLocationLiteral = Literal.parseLiteral("position("
+					+ x + "," + y + ").");
+
+			removePercept(agent, oldLocationLiteral);
+			addPercept(agent, newLocationLiteral);
+			
+			setAgPos(agentNumber, new Location(x, y));
 		}
 
+		
 		public static final double max_percentage = 0.27;
 		public static final double min_percentage = 0.03;
 
@@ -253,6 +254,7 @@ public class SWATEnv extends Environment {
 			int obstacle_quantity = random_generator.nextInt(max_quantity
 					- min_quantity + 1)
 					+ min_quantity;
+			obstacle_quantity = 0;
 
 			int placed_obstacles = 0;
 			int x, y;
@@ -282,6 +284,7 @@ public class SWATEnv extends Environment {
 			for (int i = 0; i < GRID_SIZE && ag < agents_per_team; ++i) {
 				for (int j = 0; j < GRID_SIZE && ag < agents_per_team; ++j) {
 					if (isCellAvailable(i, j)) {
+						System.out.println("blue:" + ag);
 						setAgPos(ag, i, j);
 						ag++;
 					}
@@ -292,6 +295,7 @@ public class SWATEnv extends Environment {
 			for (int i = GRID_SIZE - 1; i >= 0 && ag < this.numberOfAgents; --i) {
 				for (int j = 0; j < GRID_SIZE && ag < this.numberOfAgents; ++j) {
 					if (isCellAvailable(i, j)) {
+						System.out.println("red:" + ag);
 						setAgPos(ag, i, j);
 						ag++;
 					}
@@ -333,20 +337,20 @@ public class SWATEnv extends Environment {
 			addPercept(redFlagLiteral);
 
 			for (int i = 0; i < this.numberOfAgents; ++i) {
-				String agentName = "player" + i;
+				String agent = agentName(i);
 
 				Location location = getAgPos(i);
 				Literal locationLiteral = Literal.parseLiteral("position("
 						+ location.x + "," + location.y + ").");
 
-				addPercept(agentName, locationLiteral);
+				addPercept(agent, locationLiteral);
 				Literal teamLiteral;
 				if (isRedTeam(i)) {
 					teamLiteral = Literal.parseLiteral("team(red_team).");
 				} else {
 					teamLiteral = Literal.parseLiteral("team(blue_team).");
 				}
-				addPercept(agentName, teamLiteral);
+				addPercept(agent, teamLiteral);
 			}
 
 		}

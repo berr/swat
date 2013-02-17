@@ -2,3 +2,6 @@
 *.goal
 .project
 *~
+.metadata
+SWAT/bin
+src/bin

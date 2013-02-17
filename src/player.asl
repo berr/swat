@@ -25,12 +25,12 @@ inside_world(X,Y) :-
 
 +!main
    <- 
-      !attack;
-	  !return.
+      !attack.
+	  //!return.
 
 +!attack : team(T) & enemy(T,E) & position(X,Y) & flag(E, X, Y)
    <-
-   	grab_flag.
+   	win.
 
 +!attack : team(T) & enemy(T, E) & flag(E, X, Y)
    <- 
