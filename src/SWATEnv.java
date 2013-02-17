@@ -254,7 +254,6 @@ public class SWATEnv extends Environment {
 			int obstacle_quantity = random_generator.nextInt(max_quantity
 					- min_quantity + 1)
 					+ min_quantity;
-			obstacle_quantity = 0;
 
 			int placed_obstacles = 0;
 			int x, y;
