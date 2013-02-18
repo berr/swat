@@ -45,7 +45,7 @@ inside_world(X,Y) :-
 	
 -!attack : true
    <-
-    error.
+    drop.
 	
 +!return : number(I) & team(I,T) & position(X,Y) & base(T, X, Y) & carrying_flag(I,T)
    <-
@@ -61,3 +61,10 @@ inside_world(X,Y) :-
      move_towards(A, B);
 	 !return.
 
++seen(X) : number(I) & not ally(I,X)
+   <-
+    fire_the_mighty_weapon.
+	
+//+seen(X) : number(I) & ally(I,X)
+//   <-
+//    greet.

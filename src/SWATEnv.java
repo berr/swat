@@ -83,15 +83,22 @@ public class SWATEnv extends Environment {
 				int y = (int) ((NumberTerm) action.getTerm(1)).solve();
 				model.moveTowardsLocation(agentNumber, x, y);
 			} else if (action_name.equals("win")) {
-				System.out.println("WIN!");
+				String team;
+				if (agents.get(agentNumber).team() == RED_TEAM)
+					team = "Red team";
+				else
+					team = "Blue team";
+				System.out.println(team + " won!");
 				stop();
 			} else if (action_name.equals("grab_flag")) {
 				String s = action.getTerm(0).toString();
 				grab_flag(agentNumber, s);
-			} else if (action_name.equals("error")) {
-				System.out.println("error");
+			} else if (action_name.equals("fire_the_mighty_weapon")) {
+				System.out.println("BAM!! BAM!!");
 			} else if (action_name.equals("drop")) {
 				System.out.println("drop");
+			} else if (action_name.equals("error")) {
+				System.out.println("error");
 			} else {
 				return false;
 			}
@@ -217,6 +224,7 @@ public class SWATEnv extends Environment {
 				int future_y = agentLocation.y + y_offset;
 				if(isCellAvailableForAgent(future_x, future_y)){
 					move(agentNumber, future_x, future_y);
+					
 					break;
 				}
 			}
@@ -254,7 +262,82 @@ public class SWATEnv extends Environment {
 				moveFlag(x, y, oldLocation, "blue_team");
 			}
 			
+			agent.setOrientation(resultingOrientation(oldLocation.x, oldLocation.y, x, y));
+			Agent seen = checkAgentsInSight(agent);
+			if (seen != null) {
+				Literal seenLiteral = Literal.parseLiteral("seen(" + seen.number() + ").");
+				addPercept(agent.name(), seenLiteral);
+			}		
+		}
+		
+		private Agent checkAgentsInSight(Agent agent) {
+			Location pos = getAgPos(agent.number());
+			int x = pos.x;
+			int y = pos.y;
+			String orientation = agent.orientation();
+			
+			if (orientation.equals("east")) {
+				x += 1;
+				while (x < width) {
+					if (hasObject(WALL, x, y)) 
+						return null;
+					int seenAgentNumber = getAgAtPos(x, y);
+					if (seenAgentNumber != -1)
+						return agents.get(seenAgentNumber);
+					++x;
+				}
+			}
+			if (orientation.equals("west")) {
+				x -= 1;
+				while (x >= 0) {
+					if (hasObject(WALL, x, y)) 
+						return null;
+					int seenAgentNumber = getAgAtPos(x, y);
+					if (seenAgentNumber != -1)
+						return agents.get(seenAgentNumber);
+					--x;
+				}
+			}
+			if (orientation.equals("north")) {
+				y -= 1;
+				while (y >= 0) {
+					if (hasObject(WALL, x, y)) 
+						return null;
+					int seenAgentNumber = getAgAtPos(x, y);
+					if (seenAgentNumber != -1)
+						return agents.get(seenAgentNumber);
+					--y;
+				}
+			}
+			if (orientation.equals("east")) {
+				y += 1;
+				while (y < height) {
+					if (hasObject(WALL, x, y)) 
+						return null;
+					int seenAgentNumber = getAgAtPos(x, y);
+					if (seenAgentNumber != -1)
+						return agents.get(seenAgentNumber);
+					++y;
+				}
+			}
+			return null;
+		}
+
+		private synchronized String resultingOrientation(int oldX, int oldY, int newX, int newY) {
+			int xDiff = newX - oldX;
+			if (xDiff == 0) {
 				
+				int yDiff = newY - oldY;
+				if (yDiff > 0) 
+					return "south";
+				else
+					return "north";
+				
+			} else if (xDiff > 0) {
+				return "east";
+			} else {
+				return "west";
+			}
 		}
 
 		private synchronized void moveFlag(int x, int y, Location oldLocation, String team) {
@@ -330,26 +413,32 @@ public class SWATEnv extends Environment {
 
 		private void setupTeams() {
 			// Setup teams
-			int agent_number = 0;
+			int agentNumber = 0;
 			int agents_per_team = this.numberOfAgents / 2;
 			// blue team agents
-			for (int i = 0; i < GRID_SIZE && agent_number < agents_per_team; ++i) {
-				for (int j = 0; j < GRID_SIZE && agent_number < agents_per_team; ++j) {
-					agents.get(agent_number).setTeam(BLUE_TEAM);
+			for (int i = 0; i < GRID_SIZE && agentNumber < agents_per_team; ++i) {
+				for (int j = 0; j < GRID_SIZE && agentNumber < agents_per_team; ++j) {
+					agents.get(agentNumber).setTeam(BLUE_TEAM);
+					agents.get(agentNumber).setOrientation("east");
+					Literal facingLiteral = Literal.parseLiteral("facing(east).");
+					addPercept(agents.get(agentNumber).name(), facingLiteral);
 					if (isCellAvailable(i, j)) {
-						setAgPos(agent_number, i, j);
-						agent_number++;
+						setAgPos(agentNumber, i, j);
+						agentNumber++;
 					}
 				}
 			}
 
 			// red team agents
-			for (int i = GRID_SIZE - 1; i >= 0 && agent_number < this.numberOfAgents; --i) {
-				for (int j = 0; j < GRID_SIZE && agent_number < this.numberOfAgents; ++j) {
+			for (int i = GRID_SIZE - 1; i >= 0 && agentNumber < this.numberOfAgents; --i) {
+				for (int j = 0; j < GRID_SIZE && agentNumber < this.numberOfAgents; ++j) {
+					agents.get(agentNumber).setTeam(RED_TEAM);
+					agents.get(agentNumber).setOrientation("west");
+					Literal facingLiteral = Literal.parseLiteral("facing(west).");
+					addPercept(agents.get(agentNumber).name(), facingLiteral);
 					if (isCellAvailable(i, j)) {
-						agents.get(agent_number).setTeam(RED_TEAM);
-						setAgPos(agent_number, i, j);
-						agent_number++;
+						setAgPos(agentNumber, i, j);
+						agentNumber++;
 					}
 				}
 			}
@@ -503,6 +592,7 @@ public class SWATEnv extends Environment {
 		private final int number;
 		private int carried_flag;
 		private int team;
+		private String orientation;
 		
 		public Agent(String type, int number){
 			this.type = type;
@@ -535,7 +625,7 @@ public class SWATEnv extends Environment {
 			this.team = team;
 		}
 
-		public int getTeam() {
+		public int team() {
 			return team;
 		}
 		
@@ -545,6 +635,14 @@ public class SWATEnv extends Environment {
 		
 		public boolean isBlueTeamMember(){
 			return this.team == BLUE_TEAM;
+		}
+
+		public void setOrientation(String orientation) {
+			this.orientation = orientation;
+		}
+
+		public String orientation() {
+			return orientation;
 		}
 		
 	}
