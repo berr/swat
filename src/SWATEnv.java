@@ -258,7 +258,7 @@ public class SWATEnv extends Environment {
 				int y_offset = Math.abs(random.nextInt() % 3) - 1;
 				int future_x = agentLocation.x + x_offset;
 				int future_y = agentLocation.y + y_offset;
-				if (isCellAvailableForAgent(future_x, future_y)) {
+				if ((future_x == 0 && future_y == 0) || isCellAvailableForAgent(future_x, future_y)) {
 					move(agentNumber, future_x, future_y);
 
 					break;
