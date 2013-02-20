@@ -1,8 +1,6 @@
 import jason.asSyntax.Literal;
 import jason.asSyntax.NumberTerm;
-import jason.asSyntax.StringTerm;
 import jason.asSyntax.Structure;
-import jason.asSyntax.Term;
 import jason.environment.Environment;
 import jason.environment.grid.GridWorldModel;
 import jason.environment.grid.GridWorldView;
@@ -251,6 +249,14 @@ public class SWATEnv extends Environment {
 			
 			setAgPos(agentNumber, new Location(x, y));
 			
+			agent.setOrientation(resultingOrientation(oldLocation.x, oldLocation.y, x, y));
+			Agent seen = checkAgentsInSight(agent);
+			if (seen != null) {
+				Literal seenLiteral = Literal.parseLiteral("seen(" + seen.number() + ").");
+				addPercept(agent.name(), seenLiteral);
+			}		
+
+			
 			if(!agent.hasFlag())
 				return;
 			
@@ -262,12 +268,6 @@ public class SWATEnv extends Environment {
 				moveFlag(x, y, oldLocation, "blue_team");
 			}
 			
-			agent.setOrientation(resultingOrientation(oldLocation.x, oldLocation.y, x, y));
-			Agent seen = checkAgentsInSight(agent);
-			if (seen != null) {
-				Literal seenLiteral = Literal.parseLiteral("seen(" + seen.number() + ").");
-				addPercept(agent.name(), seenLiteral);
-			}		
 		}
 		
 		private Agent checkAgentsInSight(Agent agent) {
