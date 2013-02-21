@@ -50,7 +50,7 @@ public class SWATEnv extends Environment {
 				String agentName = agentClass.name;
 				for (int agentNumber = 0; agentNumber < agentClass.qty; agentNumber++) {
 					this.agents.add(new Agent(agentName, agentNumber));
-					++NUMBER_OF_AGENTS;
+					++NUMBER_OF_AGENTS; 
 				}
 
 			}
@@ -117,7 +117,7 @@ public class SWATEnv extends Environment {
 	}
 
 	private synchronized void fire(Agent agent) {
-		Agent deadManWalking = model.getAgentsInSight(agent);
+		Agent deadManWalking = model.getAgentsInSight(agent, 1000);
 		if (deadManWalking == null)
 			return;
 
@@ -288,7 +288,7 @@ public class SWATEnv extends Environment {
 
 			agent.setOrientation(resultingOrientation(oldLocation.x,
 					oldLocation.y, x, y));
-			Agent seen = getAgentsInSight(agent);
+			Agent seen = getAgentsInSight(agent, width / 2);
 			if (seen != null) {
 				Literal seenLiteral = Literal.parseLiteral("seen("
 						+ seen.number() + ").");
@@ -308,15 +308,18 @@ public class SWATEnv extends Environment {
 
 		}
 
-		public Agent getAgentsInSight(Agent agent) {
+		public Agent getAgentsInSight(Agent agent, int sightRange) {
 			Location pos = getAgPos(agent.number());
 			int x = pos.x;
 			int y = pos.y;
 			String orientation = agent.orientation();
 
+			int initialPosition;
+			
 			if (orientation.equals("east")) {
+				initialPosition = x;
 				x += 1;
-				while (x < width) {
+				while (x < width && (x - initialPosition) <= sightRange) {
 					if (hasObject(WALL, x, y))
 						return null;
 					int seenAgentNumber = getAgAtPos(x, y);
@@ -326,8 +329,9 @@ public class SWATEnv extends Environment {
 				}
 			}
 			if (orientation.equals("west")) {
+				initialPosition = x;
 				x -= 1;
-				while (x >= 0) {
+				while (x >= 0 && (initialPosition - x) <= sightRange) {
 					if (hasObject(WALL, x, y))
 						return null;
 					int seenAgentNumber = getAgAtPos(x, y);
@@ -337,8 +341,9 @@ public class SWATEnv extends Environment {
 				}
 			}
 			if (orientation.equals("north")) {
+				initialPosition = y;
 				y -= 1;
-				while (y >= 0) {
+				while (y >= 0 && (initialPosition - y) <= sightRange) {
 					if (hasObject(WALL, x, y))
 						return null;
 					int seenAgentNumber = getAgAtPos(x, y);
@@ -347,9 +352,10 @@ public class SWATEnv extends Environment {
 					--y;
 				}
 			}
-			if (orientation.equals("east")) {
+			if (orientation.equals("south")) {
+				initialPosition = y;
 				y += 1;
-				while (y < height) {
+				while (y < height && (y - initialPosition) <= sightRange) {
 					if (hasObject(WALL, x, y))
 						return null;
 					int seenAgentNumber = getAgAtPos(x, y);

@@ -31,9 +31,7 @@ inside_world(X,Y) :-
 	  !return.
 
 	  
-//+carrying_flag : number(I) & has_flag(X, E) & ally(I,X)
-//   <-
-    
+   
 +!attack : number(I) & team(I,T) & enemy(T,E) & position(X,Y) & flag(E, X, Y)
    <-
    	grab_flag(E).
@@ -43,14 +41,6 @@ inside_world(X,Y) :-
    	move_towards(X, Y);
 	!attack.
 	
--!attack : true
-   <-
-    drop.
-	
-+!return : number(I) & team(I,T) & position(X,Y) & base(T, X, Y) & carrying_flag(I,T)
-   <-
-     drop;
-	 !main.
 
 +!return : number(I) & team(I,T) & enemy(T,E) & position(X,Y) & base(T, X, Y) & carrying_flag(I,E)
    <-
